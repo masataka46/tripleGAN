@@ -84,29 +84,29 @@ class Make_mnist_datasets():
         #     d_test_mod[(num % 1000) * 10 + (num // 1000)] = d_test[num]
             
         #debug
-        print("x_train.shape = ", x_train.shape)
-        print("d_train.shape = ", d_train.shape)
-        print("x_test.shape = ", x_test.shape)
-        print("d_test.shape = ", d_test.shape)
-        print("d_train[0] = ", d_train[0])
-        print("d_train[1] = ", d_train[1])
-        print("d_train[2] = ", d_train[2])
-        print("d_train[3] = ", d_train[3])
-        print("d_train[4] = ", d_train[4])
-        print("d_train[5] = ", d_train[5])
-        print("d_train[6] = ", d_train[6])
-        print("d_train[7] = ", d_train[7])
-        print("d_train[8] = ", d_train[8])
-        print("d_train[9] = ", d_train[9])
-        print("d_train[10] = ", d_train[10])
-        print("d_train[6999] = ", d_train[6999])
-        print("d_train[1234] = ", d_train[1234])
-        print("d_test[0] = ", d_test[0])
-        print("d_test[1] = ", d_test[1])
-        print("d_test[2] = ", d_test[2])
-        print("d_test[9] = ", d_test[9])
-        print("d_test[10] = ", d_test[10])
-        print("d_test[1234] = ", d_test[1234])
+        # print("x_train.shape = ", x_train.shape)
+        # print("d_train.shape = ", d_train.shape)
+        # print("x_test.shape = ", x_test.shape)
+        # print("d_test.shape = ", d_test.shape)
+        # print("d_train[0] = ", d_train[0])
+        # print("d_train[1] = ", d_train[1])
+        # print("d_train[2] = ", d_train[2])
+        # print("d_train[3] = ", d_train[3])
+        # print("d_train[4] = ", d_train[4])
+        # print("d_train[5] = ", d_train[5])
+        # print("d_train[6] = ", d_train[6])
+        # print("d_train[7] = ", d_train[7])
+        # print("d_train[8] = ", d_train[8])
+        # print("d_train[9] = ", d_train[9])
+        # print("d_train[10] = ", d_train[10])
+        # print("d_train[6999] = ", d_train[6999])
+        # print("d_train[1234] = ", d_train[1234])
+        # print("d_test[0] = ", d_test[0])
+        # print("d_test[1] = ", d_test[1])
+        # print("d_test[2] = ", d_test[2])
+        # print("d_test[9] = ", d_test[9])
+        # print("d_test[10] = ", d_test[10])
+        # print("d_test[1234] = ", d_test[1234])
 
         # make_1_img(x_train)
         Utility.make_1_img(x_train)
@@ -161,7 +161,7 @@ class Make_mnist_datasets():
             if num % 10 != int0to9:
                 continue
 
-            print("label_batch[", num, "]=", label_batch[num])
+            # print("label_batch[", num, "]=", label_batch[num])
 
             label_num = 0
             for num2, ele2 in enumerate(label_batch[num]):

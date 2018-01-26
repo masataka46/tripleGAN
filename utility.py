@@ -8,31 +8,30 @@ def convert_to_10class(d):
     for num, contents in enumerate(d):
         d_mod[num][int(contents)] = 1.0
     # debug
-    print("d_mod[100] =", d_mod[100])
-    print("d_mod[200] =", d_mod[200])
+    # print("d_mod[100] =", d_mod[100])
+    # print("d_mod[200] =", d_mod[200])
 
     return d_mod
 
 def make_1_img(img_batch):  # for debug
-
     for num, ele in enumerate(img_batch):
-        if num != 1234:
+        if num != 0:
             continue
 
         img_tmp = ele
         img_tmp = np.tile(img_tmp, (1, 1, 3)) * 255
         img_tmp = img_tmp.astype(np.uint8)
         image_PIL = Image.fromarray(img_tmp)
-        image_PIL.save("./out_images_tripleGAN2/row_img_" + ".png")
+        image_PIL.save("./out_images_tripleGAN/debug_img_" + ".png")
 
     return
     
 def make_output_img(image_array, sample_num_h, out_image_dir, epoch):
 
-    print("image_array.shape =", image_array.shape)
-    print("np.max(image_array) = ", np.max(image_array))
-    print("np.min(image_array) = ", np.min(image_array))
-    print("np.mean(image_array) = ", np.mean(image_array))
+    # print("image_array.shape =", image_array.shape)
+    # print("np.max(image_array) = ", np.max(image_array))
+    # print("np.min(image_array) = ", np.min(image_array))
+    # print("np.mean(image_array) = ", np.mean(image_array))
 
     wide_image = np.zeros((28 * sample_num_h, 28 * sample_num_h, 1), dtype=np.float32)
     for h in range(sample_num_h):

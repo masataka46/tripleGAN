@@ -20,7 +20,7 @@ alpha_apply_thr = 200
 keep_prob_rate = 0.5
 
 mnist_file_name = ["mnist_train_img.npy", "mnist_train_label.npy", "mnist_test_img.npy", "mnist_test_label.npy"]
-board_dir_name = "data20" #directory for tensorboard
+board_dir_name = "data27" #directory for tensorboard
 seed = 1234
 np.random.seed(seed=seed)
 
@@ -28,17 +28,18 @@ np.random.seed(seed=seed)
 # adam_b1_c = 0.5
 # adam_b1_g = 0.5
 
-make_mnist = Make_mnist_datasets(mnist_file_name, alpha_P)
 
-out_image_dir = './out_images_tripleGAN2' #output image file
+out_image_dir = './out_images_tripleGAN' #output image file
 out_model_dir = './out_models_tripleGAN' #output model file
 try:
     os.mkdir(out_image_dir)
     os.mkdir(out_model_dir)
     os.mkdir('./out_images_Debug') #for debug
 except:
+    print("mkdir error")
     pass
 
+make_mnist = Make_mnist_datasets(mnist_file_name, alpha_P)
 
 def leaky_relu(x, alpha):
     return tf.nn.relu(x) - alpha * tf.nn.relu(-x)
@@ -48,30 +49,19 @@ def gaussian_noise(input, std): #used at discriminator
     return input + noise
 
 #generator------------------------------------------------------------------
-# wg1 = tf.Variable(tf.random_normal([class_num + noise_num, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg1')
-# bg1 = tf.Variable(tf.zeros([500]), name='bg1')
-# scaleg2 = tf.Variable(tf.ones([500]), name='sg2')
-# betag2 = tf.Variable(tf.zeros([500]), name='beg2')
-# wg3 = tf.Variable(tf.random_normal([500, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg3')
-# bg3 = tf.Variable(tf.zeros([500]), name='bg3')
-# scaleg4 = tf.Variable(tf.ones([500]), name='sg4')
-# betag4 = tf.Variable(tf.zeros([500]), name='beg4')
-# wg5 = tf.Variable(tf.random_normal([500, 784], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg5')
-# bg5 = tf.Variable(tf.zeros([784]), name='bg5')
+wg1 = tf.Variable(tf.random_normal([class_num + noise_num, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg1')
+bg1 = tf.Variable(tf.zeros([500]), name='bg1')
+scaleg2 = tf.Variable(tf.ones([500]), name='sg2')
+betag2 = tf.Variable(tf.zeros([500]), name='beg2')
+wg3 = tf.Variable(tf.random_normal([500, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg3')
+bg3 = tf.Variable(tf.zeros([500]), name='bg3')
+scaleg4 = tf.Variable(tf.ones([500]), name='sg4')
+betag4 = tf.Variable(tf.zeros([500]), name='beg4')
+wg5 = tf.Variable(tf.random_normal([500, 784], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg5')
+bg5 = tf.Variable(tf.zeros([784]), name='bg5')
 
 def generator(y, z):
-    with tf.variable_scope('g'):
-        wg1 = tf.Variable(tf.random_normal([class_num + noise_num, 500], mean=0.0, stddev=0.05, seed=seed),
-                          dtype=tf.float32, name='wg1')
-        bg1 = tf.Variable(tf.zeros([500]), name='bg1')
-        scaleg2 = tf.Variable(tf.ones([500]), name='sg2')
-        betag2 = tf.Variable(tf.zeros([500]), name='beg2')
-        wg3 = tf.Variable(tf.random_normal([500, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg3')
-        bg3 = tf.Variable(tf.zeros([500]), name='bg3')
-        scaleg4 = tf.Variable(tf.ones([500]), name='sg4')
-        betag4 = tf.Variable(tf.zeros([500]), name='beg4')
-        wg5 = tf.Variable(tf.random_normal([500, 784], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg5')
-        bg5 = tf.Variable(tf.zeros([784]), name='bg5')
+    with tf.variable_scope('generator'):
         #concat label and noise
         concat0 = tf.concat([y, z], axis=1, name='G_concat0')
 
@@ -186,8 +176,6 @@ wc4 = tf.Variable(tf.truncated_normal([3, 3, 64, 128], mean=0.0, stddev=0.05, se
 bc4 = tf.Variable(tf.zeros([128]), name='bc4')
 wc5 = tf.Variable(tf.truncated_normal([3, 3, 128, 128], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc5')
 bc5 = tf.Variable(tf.zeros([128]), name='bc5')
-# wc6 = tf.Variable(tf.truncated_normal([1, 1, 128, class_num], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
-# bc6 = tf.Variable(tf.zeros([class_num]))
 wc6 = tf.Variable(tf.random_normal([128, 10], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc6')
 bc6 = tf.Variable(tf.zeros([10]), name='bc6')
 
@@ -311,26 +299,27 @@ tf.summary.histogram("wc1", wc1)
 # tf.summary.histogram("bc5", bc5)
 tf.summary.histogram("bc6", bc6)
 
-
-
 tf.summary.scalar('loss_cla_total', loss_cla_total)
+tf.summary.scalar('loss_dis_c', loss_dis_c)
+tf.summary.scalar('loss_RL', loss_RL)
+tf.summary.scalar('loss_RP', loss_RP)
 
 # tf.summary.scalar('loss_gen_total', loss_gen_total)
 merged = tf.summary.merge_all()
-
-g_vars=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='g')
 
 train_dis = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_dis_total,
                                     var_list=[wd1, wd2, wd3, wd4, wd5, wd6, bd1, bd2, bd3, bd4, bd5, bd6]
                                                                             , name='Adam_dis')
 train_gen = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_gen_total,
-                                    # var_list=[wg1, wg3, wg5, bg1, bg3, bg5, betag2, scaleg2, betag4, scaleg4]
-                                    var_list=g_vars
+                                    var_list=[wg1, wg3, wg5, bg1, bg3, bg5, betag2, scaleg2, betag4, scaleg4]
                                                                             , name='Adam_gen')
 train_cla = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_cla_total,
                                     var_list=[wc1, wc2, wc3, wc4, wc5, wc6, bc1, bc2, bc3, bc4, bc5, bc6]
                                                                             , name='Adam_cla')
-
+# train_cla = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_cla_total,
+#                                     var_list=[wc1, wc2, wc3, wc4, wc5, wc6, bc1, bc2, bc3, bc4, bc5, bc6,
+#                                               wg1, wg3, wg5, bg1, bg3, bg5, betag2, scaleg2, betag4, scaleg4]
+#                                                                             , name='Adam_cla')
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
@@ -338,22 +327,30 @@ summary_writer = tf.summary.FileWriter(board_dir_name, sess.graph)
 
 #training loop
 for epoch in range(0, n_epoch):
-    sum_loss_dis = np.float32(0)
     sum_loss_gen = np.float32(0)
+
+    sum_loss_dis = np.float32(0)
+    sum_loss_dis_r = np.float32(0)
+    sum_loss_dis_c0 = np.float32(0)
+    sum_loss_dis_g0 = np.float32(0)
+
     sum_loss_cla = np.float32(0)
     sum_accu_cla = np.float32(0)
+    sum_loss_dis_c1 = np.float32(0)
+    sum_loss_RL = np.float32(0)
+    sum_loss_RP = np.float32(0)
 
     len_img_real = make_mnist.make_data_for_1_epoch()
     #debug
-    print("make_mnist.img_real_1epoch.shape = ", make_mnist.img_real_1epoch.shape)
-    print("make_mnist.img_cla_1epoch.shape = ", make_mnist.img_cla_1epoch.shape)
+    # print("make_mnist.img_real_1epoch.shape = ", make_mnist.img_real_1epoch.shape)
+    # print("make_mnist.img_cla_1epoch.shape = ", make_mnist.img_cla_1epoch.shape)
 
     for i in range(0, len_img_real, batchsize):
         img_real_batch, img_cla_batch, label_real_batch = make_mnist.get_data_for_1_batch(i, batchsize, alpha_P)
 
         #debug
-        if epoch == 0 and i == 0:
-            make_mnist.print_img_and_label(img_real_batch, label_real_batch, 7)
+        # if epoch == 0 and i == 0:
+        #     make_mnist.print_img_and_label(img_real_batch, label_real_batch, 7)
 
         #cal each batchsize
         len_real_batch = len(img_real_batch)
@@ -382,24 +379,11 @@ for epoch in range(0, n_epoch):
         d_dis_c_0_ = np.array([0.0], dtype=np.float32).reshape(1, 1)
         d_dis_c_0 = np.tile(d_dis_c_0_, (len_cla_batch, 1))
 
-        #debug
-        # print("img_real.shape = ", img_real_batch.shape)
-        # print("img_cla_batch.shape = ", img_cla_batch.shape)
-        # print("img_real_batch.shape = ", img_real_batch.shape)
-        # # print("img_cla_batch.shape = ", img_cla_batch.shape)
-        # #debug
-        # # out_dis_c_debug = sess.run(out_dis_c, feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch,
-        # #                                                  xd_: img_real_batch,
-        # #                                xc2_: img_cla_batch, d_dis_g_: d_dis_g_0, d_dis_r_: d_dis_r_1,
-        # #                                d_dis_c_:d_dis_c_0, keep_prob_:0.8})
-        # # print("out_dis_c_debug.shape = ", out_dis_c_debug.shape)
-        # print("d_dis_c_0.shape = ", d_dis_c_0.shape)
-
-        sess.run(train_gen, feed_dict={z_:z, yg_:label_gen, d_dis_g_: d_dis_g_1})
+        #train discriminator
         sess.run(train_dis, feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch, xd_: img_real_batch,
                                        xc2_: img_cla_batch, d_dis_g_: d_dis_g_0, d_dis_r_: d_dis_r_1,
                                        d_dis_c_:d_dis_c_0, keep_prob_:keep_prob_rate})
-
+        #train classifier
         if epoch > alpha_apply_thr:
             sess.run(train_cla, feed_dict={z_:z, yg_:label_gen, xc1_: img_real_batch, xc2_: img_cla_batch,
                                        yc1_: label_real_batch, d_dis_c_: d_dis_c_1,keep_prob_:keep_prob_rate,
@@ -408,18 +392,21 @@ for epoch in range(0, n_epoch):
             sess.run(train_cla, feed_dict={z_: z, yg_: label_gen, xc1_: img_real_batch, xc2_: img_cla_batch,
                                            yc1_: label_real_batch, d_dis_c_: d_dis_c_1, keep_prob_: keep_prob_rate,
                                            alpha_p_flag_: 0.0})
+        #train generator
+        sess.run(train_gen, feed_dict={z_: z, yg_: label_gen, d_dis_g_: d_dis_g_1})
 
         loss_gen_total_ = sess.run(loss_gen_total, feed_dict={z_:z, yg_:label_gen, d_dis_g_: d_dis_g_1})
 
-        loss_dis_total_ = sess.run(loss_dis_total, feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch,
+        loss_dis_total_, loss_dis_r_, loss_dis_g_0, loss_dis_c_0 = sess.run([loss_dis_total, loss_dis_r, loss_dis_g, loss_dis_c],
+                                                             feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch,
                                         xd_: img_real_batch, xc2_: img_cla_batch, d_dis_g_: d_dis_g_0,
                                         d_dis_r_: d_dis_r_1, d_dis_c_:d_dis_c_0, keep_prob_:1.0})
 
-        loss_cla_total_ = sess.run(loss_cla_total, feed_dict={z_:z, yg_:label_gen, xc1_: img_real_batch,
-                                        xc2_: img_cla_batch,yc1_: label_real_batch,
-                                                              d_dis_c_: d_dis_c_1, keep_prob_:1.0, alpha_p_flag_: 0.0})
+        loss_cla_total_, loss_dis_c_1, loss_RL_, loss_RP_ = sess.run([loss_cla_total, loss_dis_c, loss_RL, loss_RP],
+                                   feed_dict={z_:z, yg_:label_gen, xc1_: img_real_batch, xc2_: img_cla_batch,
+                                    yc1_: label_real_batch, d_dis_c_: d_dis_c_1, keep_prob_:1.0, alpha_p_flag_: 0.0})
 
-        #debug
+        #for tensorboard
         merged_ = sess.run(merged, feed_dict={z_:z, yg_:label_gen, xc1_: img_real_batch,
                                         xc2_: img_cla_batch,yc1_: label_real_batch,
                                                               d_dis_c_: d_dis_c_1, keep_prob_:1.0, alpha_p_flag_: 0.0})
@@ -428,65 +415,42 @@ for epoch in range(0, n_epoch):
         summary_writer.add_summary(merged_, epoch)
 
         sum_loss_gen += loss_gen_total_
+
         sum_loss_dis += loss_dis_total_
+        sum_loss_dis_r += loss_dis_r_
+        sum_loss_dis_c0 += loss_dis_c_0
+        sum_loss_dis_g0 += loss_dis_g_0
+
         sum_loss_cla += loss_cla_total_
-    print("epoch =", epoch , ", sum_loss_gen =", sum_loss_gen, ", sum_loss_dis =", sum_loss_dis,
-          ", sum_loss_cla =", sum_loss_cla)
+        sum_loss_dis_c1 += loss_dis_c_1
+        sum_loss_RL += loss_RL_
+        sum_loss_RP += loss_RP_
+    print("-----------------------------------------------------")
+    print("epoch =", epoch , ", Total Loss of G =", sum_loss_gen, ", Total Loss of D =", sum_loss_dis,
+          ", Total Loss of C =", sum_loss_cla)
+    print("Discriminator: Loss Real =", sum_loss_dis_r, ", Loss C =", sum_loss_dis_c0, ", Loss D =", sum_loss_dis_g0,)
+    print("Classifier: Loss adv =", sum_loss_dis_c1, ", Loss RL =", sum_loss_RL, ", Loss RP =", sum_loss_RP,)
+
 
     if epoch % 10 == 0:
 
         sample_num_h = 10
         sample_num = sample_num_h ** 2
 
-        # z_test = np.random.uniform(0, 1, sample_num * noise_num)
-        z_test = np.random.uniform(0, 1, sample_num_h * noise_num).reshape(sample_num_h, 1, noise_num)
-        z_test = np.tile(z_test, (1, sample_num_h, 1))
+        z_test = np.random.uniform(0, 1, sample_num_h * noise_num).reshape(1, sample_num_h, noise_num)
+        z_test = np.tile(z_test, (sample_num_h, 1, 1))
         z_test = z_test.reshape(-1, sample_num).astype(np.float32)
-        # label_gen_int = np.random.randint(0, class_num, sample_num)
+
         label_gen_int = np.arange(10).reshape(10, 1).astype(np.float32)
         label_gen_int = np.tile(label_gen_int, (1, 10)).reshape(sample_num)
-
-        # print("label_gen_int =", label_gen_int)
         label_gen_test = make_mnist.convert_to_10class_(label_gen_int)
-        # print("label_gen_test =", label_gen_test)
         gen_images = sess.run(x_gen, feed_dict={z_:z_test, yg_:label_gen_test})
-        # print("gen_images.shape =", gen_images.shape)
-        # print("np.max(gen_images) = ", np.max(gen_images))
-        # print("np.min(gen_images) = ", np.min(gen_images))
-        # print("np.mean(gen_images) = ", np.mean(gen_images))
 
         Utility.make_output_img(gen_images, sample_num_h, out_image_dir, epoch)
-        #debug
-        # if epoch == 20:
-        #     wide_image = np.tile(gen_images, (1, 1, 1, 3)) * 255
-        #     wide_image = wide_image.astype(np.uint8)
-        #     for i in range(100):
-        #         wide_image_PIL = Image.fromarray(wide_image[i])
-        #         wide_image_PIL.save(out_image_dir + "/resultImage_ind_" + str(i) + ".png")
+        # z_only_1 = np.random.uniform(0, 1, noise_num).reshape(1, noise_num)
+        # label_gen_only_1 = np.array([4]).reshape(1, 1).astype(np.float32)
+        # label_gen_only_1_class = make_mnist.convert_to_10class_(label_gen_only_1)
+        # gen_image_1 = sess.run(x_gen, feed_dict={z_:z_only_1, yg_:label_gen_only_1_class})
         #
-        # wide_image = np.zeros((28 * sample_num_h, 28 * sample_num_h, 1), dtype=np.float32)
-        # for h in range(sample_num_h):
-        #     for w in range(sample_num_h):
-        #         for h_mnist in range(28):
-        #             for w_mnist in range(28):
-        #                 value_ = gen_images[h * sample_num_h + w][h_mnist][w_mnist][0]
-        #                 if value_ < 0:
-        #                     wide_image[h * 28 + h_mnist][w * 28 + w_mnist][0] = 0.0
-        #                 elif value_ > 1:
-        #                     wide_image[h * 28 + h_mnist][w * 28 + w_mnist][0] = 1.0
-        #                 else:
-        #                     wide_image[h * 28 + h_mnist][w * 28 + w_mnist][0] = value_
-        #
-        # wide_image = np.tile(wide_image, (1, 1, 3)) * 255
-        # wide_image = wide_image.astype(np.uint8)
-        # wide_image_PIL = Image.fromarray(wide_image)
-        # wide_image_PIL.save(out_image_dir + "/resultImage_" + str(epoch) + ".png")
-        #
-        # small_image = (np.tile(gen_images[0], (1, 1, 3)) * 255).astype(np.uint8)
-        # small_image_PIL = Image.fromarray(small_image)
-        # small_image_PIL.save(out_image_dir + "/resultImageSmall_" + str(epoch) + ".png")
-
-
-
-
+        # Utility.make_1_img(gen_image_1)
 
