@@ -36,7 +36,7 @@ try:
     os.mkdir(out_model_dir)
     os.mkdir('./out_images_Debug') #for debug
 except:
-    print("mkdir error")
+    # print("mkdir error")
     pass
 
 make_mnist = Make_mnist_datasets(mnist_file_name, alpha_P)
@@ -49,26 +49,28 @@ def gaussian_noise(input, std): #used at discriminator
     return input + noise
 
 #generator------------------------------------------------------------------
-wg1 = tf.Variable(tf.random_normal([class_num + noise_num, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg1')
-bg1 = tf.Variable(tf.zeros([500]), name='bg1')
-scaleg2 = tf.Variable(tf.ones([500]), name='sg2')
-betag2 = tf.Variable(tf.zeros([500]), name='beg2')
-wg3 = tf.Variable(tf.random_normal([500, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg3')
-bg3 = tf.Variable(tf.zeros([500]), name='bg3')
-scaleg4 = tf.Variable(tf.ones([500]), name='sg4')
-betag4 = tf.Variable(tf.zeros([500]), name='beg4')
-wg5 = tf.Variable(tf.random_normal([500, 784], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wg5')
-bg5 = tf.Variable(tf.zeros([784]), name='bg5')
-
-def generator(y, z):
-    with tf.variable_scope('generator'):
+def generator(y, z, reuse=False):
+    with tf.variable_scope('generator', reuse=reuse):
+        wg1 = tf.get_variable('wd1', [class_num + noise_num, 500], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bg1 = tf.get_variable('gb1', [500], initializer=tf.constant_initializer(0.0))
+        scaleg2 = tf.get_variable('sg2', [500], initializer=tf.constant_initializer(1.0))
+        betag2 = tf.get_variable('beg2', [500], initializer=tf.constant_initializer(0.0))
+        wg3 = tf.get_variable('wg3', [500, 500], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bg3 = tf.get_variable('bg3', [500], initializer=tf.constant_initializer(0.0))
+        scaleg4 = tf.get_variable('sg4', [500], initializer=tf.constant_initializer(1.0))
+        betag4 = tf.get_variable('beg4', [500], initializer=tf.constant_initializer(0.0))
+        wg5 = tf.get_variable('wg5', [500, 784], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bg5 = tf.get_variable('bg5', [784], initializer=tf.constant_initializer(0.0))
         #concat label and noise
         concat0 = tf.concat([y, z], axis=1, name='G_concat0')
 
         #layer1 linear
         fc1 = tf.matmul(concat0, wg1, name='G_matmul1') + bg1
         #softplus function
-        sp1 = tf.log(tf.clip_by_value(1 + tf.exp(fc1), 1e-10, 1.0), name='G_softmax1')
+        sp1 = tf.log(tf.clip_by_value(1 + tf.exp(fc1), 1e-10, 1e+30), name='G_softmax1')
 
         #layer2 batch normalization
         batch_mean2, batch_var2 = tf.nn.moments(sp1, [0])
@@ -77,7 +79,7 @@ def generator(y, z):
         #layer3 linear
         fc3 = tf.matmul(bn2, wg3, name='G_matmul3') + bg3
         #softplus function
-        sp3 = tf.log(tf.clip_by_value(1 + tf.exp(fc3), 1e-10, 1.0), name='G_softmax3')
+        sp3 = tf.log(tf.clip_by_value(1 + tf.exp(fc3), 1e-10, 1e+30), name='G_softmax3')
 
         #layer4 batch normalization
         batch_mean4, batch_var4 = tf.nn.moments(sp3, [0])
@@ -95,21 +97,27 @@ def generator(y, z):
 
 
 #discriminator-----------------------------------------------------------------
-wd1 = tf.Variable(tf.random_normal([794, 1000], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd1')
-bd1 = tf.Variable(tf.zeros([1000]), name='bd1')
-wd2 = tf.Variable(tf.random_normal([1000, 500], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd2')
-bd2 = tf.Variable(tf.zeros([500]), name='bd2')
-wd3 = tf.Variable(tf.random_normal([500, 250], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd3')
-bd3 = tf.Variable(tf.zeros([250]), name='bd3')
-wd4 = tf.Variable(tf.random_normal([250, 250], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd4')
-bd4 = tf.Variable(tf.zeros([250]), name='bd4')
-wd5 = tf.Variable(tf.random_normal([250, 250], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd5')
-bd5 = tf.Variable(tf.zeros([250]), name='bd5')
-wd6 = tf.Variable(tf.random_normal([250, 1], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wd6')
-bd6 = tf.Variable(tf.zeros([1]), name='bd6')
-
-def discriminator(x, y):
-    with tf.variable_scope('discriminator'):
+def discriminator(x, y, reuse=False):
+    with tf.variable_scope('discriminator', reuse=reuse):
+        wd1 = tf.get_variable('wd1', [794, 1000], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd1 = tf.get_variable('bd1', [1000], initializer=tf.constant_initializer(0.0))
+        wd2 = tf.get_variable('wd2', [1000, 500], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd2 = tf.get_variable('bd2', [500], initializer=tf.constant_initializer(0.0))
+        wd3 = tf.get_variable('wd3', [500, 250], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd3 = tf.get_variable('bd3', [250], initializer=tf.constant_initializer(0.0))
+        wd4 = tf.get_variable('wd4', [250, 250], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd4 = tf.get_variable('bd4', [250], initializer=tf.constant_initializer(0.0))
+        wd5 = tf.get_variable('wd5', [250, 250], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd5 = tf.get_variable('bd5', [250], initializer=tf.constant_initializer(0.0))
+        wd6 = tf.get_variable('wd6', [250, 1], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bd6 = tf.get_variable('bd6', [1], initializer=tf.constant_initializer(0.0))
+        
         x_reshape = tf.reshape(x, [-1, 28 * 28])
         # concat image and label
         concat0 = tf.concat([x_reshape, y], axis=1, name='D_concat0')
@@ -162,25 +170,36 @@ def discriminator(x, y):
         # softplus function
         out_dis = tf.nn.sigmoid(fc6, name='D_sigmoid')
 
-        return out_dis
+        norm_L2 = tf.nn.l2_loss(wd1) + tf.nn.l2_loss(wd2) + tf.nn.l2_loss(wd3) + tf.nn.l2_loss(wd4) + tf.nn.l2_loss(wd5) \
+                  + tf.nn.l2_loss(wd6)
+
+        return out_dis, norm_L2
 
 
 #classifier-----------------------------------------------------------------
-wc1 = tf.Variable(tf.truncated_normal([5, 5, 1, 32], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc1')
-bc1 = tf.Variable(tf.zeros([32]), name='bc1')
-wc2 = tf.Variable(tf.truncated_normal([3, 3, 32, 64], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc2')
-bc2 = tf.Variable(tf.zeros([64]), name='bc2')
-wc3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc3')
-bc3 = tf.Variable(tf.zeros([64]), name='bc3')
-wc4 = tf.Variable(tf.truncated_normal([3, 3, 64, 128], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc4')
-bc4 = tf.Variable(tf.zeros([128]), name='bc4')
-wc5 = tf.Variable(tf.truncated_normal([3, 3, 128, 128], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc5')
-bc5 = tf.Variable(tf.zeros([128]), name='bc5')
-wc6 = tf.Variable(tf.random_normal([128, 10], mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32, name='wc6')
-bc6 = tf.Variable(tf.zeros([10]), name='bc6')
 
-def classifier(xc, keep_prob):
-    with tf.variable_scope('classifier'):
+
+def classifier(xc, keep_prob, reuse=False):
+    with tf.variable_scope('classifier', reuse=reuse):
+        wc1 = tf.get_variable('wc1', [5, 5, 1, 32], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc1 = tf.get_variable('bc1', [32], initializer=tf.constant_initializer(0.0))
+        wc2 = tf.get_variable('wc2', [3, 3, 32, 64], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc2 = tf.get_variable('bc2', [64], initializer=tf.constant_initializer(0.0))
+        wc3 = tf.get_variable('wc3', [3, 3, 64, 64], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc3 = tf.get_variable('bc3', [64], initializer=tf.constant_initializer(0.0))
+        wc4 = tf.get_variable('wc4', [3, 3, 64, 128], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc4 = tf.get_variable('bc4', [128], initializer=tf.constant_initializer(0.0))
+        wc5 = tf.get_variable('wc5', [3, 3, 128, 128], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc5 = tf.get_variable('bc5', [128], initializer=tf.constant_initializer(0.0))
+        wc6 = tf.get_variable('wc6', [128, 10], initializer=tf.random_normal_initializer
+                (mean=0.0, stddev=0.05, seed=seed), dtype=tf.float32)
+        bc6 = tf.get_variable('bc6', [10], initializer=tf.constant_initializer(0.0))
+        
         #layer1 convolution
         conv1 = tf.nn.conv2d(xc, wc1, strides=[1, 1, 1, 1], padding="SAME", name='C_conv1') + bc1
         # relu function
@@ -251,30 +270,29 @@ alpha_p_flag_ = tf.placeholder(tf.float32, name='alpha_p_flag_') #(0,1) apply al
 keep_prob_ = tf.placeholder(tf.float32, name='keep_prob_') #dropout rate
 
 # stream around generator
-x_gen, y_gen = generator(yg_, z_)
+x_gen, y_gen = generator(yg_, z_, reuse=False)
 
 # stream around classifier
-x_cla_0, y_cla_0 = classifier(x_gen, keep_prob_) # from generator
-x_cla_1, y_cla_1 = classifier(xc1_, keep_prob_) # real image labeled
-x_cla_2, y_cla_2 = classifier(xc2_, keep_prob_) # real image unlabeled
+x_cla_0, y_cla_0 = classifier(x_gen, keep_prob_, reuse=False) # from generator
+x_cla_1, y_cla_1 = classifier(xc1_, keep_prob_, reuse=True) # real image labeled
+x_cla_2, y_cla_2 = classifier(xc2_, keep_prob_, reuse=True) # real image unlabeled
 
 # loss_RP = - tf.reduce_mean(y_gen * tf.log(y_cla_0)) #loss in case generated image
 # loss_RL = - tf.reduce_mean(yc1_ * tf.log(y_cla_1)) #loss in case real image
-loss_RP = - tf.reduce_mean(y_gen * tf.log(tf.clip_by_value(y_cla_0, 1e-10, 1.0)), name='Loss_RP') #loss in case generated image
-loss_RL = - tf.reduce_mean(yc1_ * tf.log(tf.clip_by_value(y_cla_1, 1e-10, 1.0)), name='Loss_RL') #loss in case real image
+loss_RP = - tf.reduce_mean(y_gen * tf.log(tf.clip_by_value(y_cla_0, 1e-10, 1e+30)), name='Loss_RP') #loss in case generated image
+loss_RL = - tf.reduce_mean(yc1_ * tf.log(tf.clip_by_value(y_cla_1, 1e-10, 1e+30)), name='Loss_RL') #loss in case real image
 
 #stream around discriminator
-out_dis_g = discriminator(x_gen, y_gen) #from generator
-out_dis_r = discriminator(xd_, yd_) #real image and label
-out_dis_c = discriminator(x_cla_2, y_cla_2) #from classifier
+out_dis_g, normL2_1 = discriminator(x_gen, y_gen, reuse=False) #from generator
+out_dis_r, normL2_2 = discriminator(xd_, yd_, reuse=True) #real image and label
+out_dis_c, normL2_3 = discriminator(x_cla_2, y_cla_2, reuse=True) #from classifier
 
 loss_dis_g = tf.reduce_mean(tf.square(out_dis_g - d_dis_g_), name='Loss_dis_gen') #loss related to generator
 loss_dis_r = tf.reduce_mean(tf.square(out_dis_r - d_dis_r_), name='Loss_dis_rea') #loss related to real imaeg
 loss_dis_c = tf.reduce_mean(tf.square(out_dis_c - d_dis_c_), name='Loss_dis_cla') #loss related to classifier
 
-norm_L2 = tf.nn.l2_loss(wd1) + tf.nn.l2_loss(wd2) + tf.nn.l2_loss(wd3) + tf.nn.l2_loss(wd4) + tf.nn.l2_loss(wd5)\
-    + tf.nn.l2_loss(wd6)
 
+norm_L2 = normL2_1 + normL2_2 + normL2_3
 
 #total loss of discriminator
 loss_dis_total = loss_dis_r + alpha_P * loss_dis_c + (1 - alpha_P) * loss_dis_g + l2_norm_lambda * norm_L2
@@ -286,18 +304,18 @@ loss_cla_total = alpha_P * loss_dis_c + loss_RL + alpha_p_flag_ * alpha_pseudo *
 loss_gen_total = (1 - alpha_P) * loss_dis_g
 
 # tf.summary.scalar('loss_dis_total', loss_dis_total)
-tf.summary.histogram("wc1", wc1)
-# tf.summary.histogram("wc2", wc2)
-# tf.summary.histogram("wc3", wc3)
-# tf.summary.histogram("wc4", wc4)
-# tf.summary.histogram("wc5", wc5)
-# tf.summary.histogram("wc6", wc6)
-# tf.summary.histogram("bc1", bc1)
-# tf.summary.histogram("bc2", bc2)
-# tf.summary.histogram("bc3", bc3)
-# tf.summary.histogram("bc4", bc4)
-# tf.summary.histogram("bc5", bc5)
-tf.summary.histogram("bc6", bc6)
+# tf.summary.histogram("wc1", wc1)
+# # tf.summary.histogram("wc2", wc2)
+# # tf.summary.histogram("wc3", wc3)
+# # tf.summary.histogram("wc4", wc4)
+# # tf.summary.histogram("wc5", wc5)
+# # tf.summary.histogram("wc6", wc6)
+# # tf.summary.histogram("bc1", bc1)
+# # tf.summary.histogram("bc2", bc2)
+# # tf.summary.histogram("bc3", bc3)
+# # tf.summary.histogram("bc4", bc4)
+# # tf.summary.histogram("bc5", bc5)
+# tf.summary.histogram("bc6", bc6)
 
 tf.summary.scalar('loss_cla_total', loss_cla_total)
 tf.summary.scalar('loss_dis_c', loss_dis_c)
@@ -305,16 +323,27 @@ tf.summary.scalar('loss_RL', loss_RL)
 tf.summary.scalar('loss_RP', loss_RP)
 
 # tf.summary.scalar('loss_gen_total', loss_gen_total)
+
+
 merged = tf.summary.merge_all()
 
-train_dis = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_dis_total,
-                                    var_list=[wd1, wd2, wd3, wd4, wd5, wd6, bd1, bd2, bd3, bd4, bd5, bd6]
+# t_vars = tf.trainable_variables()
+g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="generator")
+d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="discriminator")
+c_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="classifier")
+# d_vars = [var for var in t_vars if 'd' in var.name]
+# g_vars = [var for var in t_vars if 'g' in var.name]
+# c_vars = [var for var in t_vars if 'c' in var.name]
+
+
+train_dis = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_dis_total, var_list=d_vars
+                                    # var_list=[wd1, wd2, wd3, wd4, wd5, wd6, bd1, bd2, bd3, bd4, bd5, bd6]
                                                                             , name='Adam_dis')
-train_gen = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_gen_total,
-                                    var_list=[wg1, wg3, wg5, bg1, bg3, bg5, betag2, scaleg2, betag4, scaleg4]
+train_gen = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_gen_total, var_list=g_vars
+                                    # var_list=[wg1, wg3, wg5, bg1, bg3, bg5, betag2, scaleg2, betag4, scaleg4]
                                                                             , name='Adam_gen')
-train_cla = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_cla_total,
-                                    var_list=[wc1, wc2, wc3, wc4, wc5, wc6, bc1, bc2, bc3, bc4, bc5, bc6]
+train_cla = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_cla_total, var_list=c_vars
+                                    # var_list=[wc1, wc2, wc3, wc4, wc5, wc6, bc1, bc2, bc3, bc4, bc5, bc6]
                                                                             , name='Adam_cla')
 # train_cla = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(loss_cla_total,
 #                                     var_list=[wc1, wc2, wc3, wc4, wc5, wc6, bc1, bc2, bc3, bc4, bc5, bc6,
@@ -378,6 +407,14 @@ for epoch in range(0, n_epoch):
 
         d_dis_c_0_ = np.array([0.0], dtype=np.float32).reshape(1, 1)
         d_dis_c_0 = np.tile(d_dis_c_0_, (len_cla_batch, 1))
+
+        #debug
+        # d_vars_ = sess.run(d_vars, feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch, xd_: img_real_batch,
+        #                                xc2_: img_cla_batch, d_dis_g_: d_dis_g_0, d_dis_r_: d_dis_r_1,
+        #                                d_dis_c_:d_dis_c_0, keep_prob_:keep_prob_rate})
+        #
+        # print("d_vars =", d_vars)
+
 
         #train discriminator
         sess.run(train_dis, feed_dict={z_:z, yg_:label_gen, yd_: label_real_batch, xd_: img_real_batch,
